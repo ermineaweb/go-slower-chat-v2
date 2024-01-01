@@ -19,7 +19,6 @@ func (m *MessageSlower) Slow() {
 
 		select {
 		case m.DisplayChan <- message:
-			// fmt.Printf("%v: %v\n", format("displayer", "magenta"), message)
 		default:
 			fmt.Println(Format("Channel full", "red"))
 			m.Faster()

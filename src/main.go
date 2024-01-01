@@ -17,6 +17,7 @@ const (
 var streamer string
 
 func init() {
+	// todo accept an array of string
 	flag.StringVar(&streamer, "streamer", "crocodyletv", "the twitch channel to view")
 	flag.StringVar(&streamer, "s", "crocodyletv", "the twitch channel to view")
 }
@@ -60,8 +61,6 @@ func main() {
 		ms.MessageChan <- fmt.Sprintf("%v %v: %v", streamer, username, msg.Message)
 	})
 
-	// client.Join("sardoche")
-	// client.Join("etoiles")
 	client.Join(streamer)
 
 	err := client.Connect()
