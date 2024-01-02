@@ -4,6 +4,13 @@ This application allows you to smooth the speed of Twitch messages to read them 
 
 ```mermaid
 graph LR;
+    Message--unbuffered chan-->Funnel;
+    Funnel--buffered chan(25)-->Slow;
+    Slow--unbuffered chan-->Display;
+```
+
+```mermaid
+graph LR;
     M[Chat\nMessage]--MessageChan\nunbuffered chan-->F[goroutine\nFunnel];
     F[goroutine\nFunnel]--SlowChan\nbuffered chan(25)-->S[goroutine\nSlow];
     S[goroutine\nSlow]--DisplayChan\nunbuffered chan-->D[goroutine\nDisplay];
