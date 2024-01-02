@@ -1,67 +1,60 @@
 package main
 
 import (
-	messageslower "chat-slower/src/MessageSlower"
+	"chat-slower/src/slower"
+	"chat-slower/src/utils"
 	"flag"
 	"fmt"
-	"time"
+	"strings"
 
 	"github.com/gempir/go-twitch-irc/v4"
 )
 
-const (
-	INITIAL_MESSAGE_COUNTER = 8
-	DELAY_MAX_ORIGINAL_CHAT = 1000
+var (
+	args                   string
+	channels               []string
+	initSpeedMsgSec        float64
+	initVoidMessageCounter int
+	initDelayMs            int
 )
 
-var streamer string
-
 func init() {
-	// todo accept an array of string
-	flag.StringVar(&streamer, "streamer", "crocodyletv", "the twitch channel to view")
-	flag.StringVar(&streamer, "s", "crocodyletv", "the twitch channel to view")
+	flag.StringVar(&args, "c", "shroud,ninja,pokimane,xqc", "list of channels to view")
+	flag.Float64Var(&initSpeedMsgSec, "s", 1, "initial chats speed in msg/s")
+	flag.IntVar(&initVoidMessageCounter, "m", 8, "number of void messages before decrease the chat speed")
+	flag.Parse()
+
+	channels = strings.Split(args, ",")
+	// speed = msg / delay <---> delay = 1 / speed
+	initDelayMs = int(1 / initSpeedMsgSec * 1000)
 }
 
 func main() {
-	flag.Parse()
-
-	ms := messageslower.MessageSlower{
-		MessageChan:           make(chan string),
-		DisplayChan:           make(chan string, 10),
-		Speed:                 1 / float64(DELAY_MAX_ORIGINAL_CHAT) * 1000,
-		Delay:                 DELAY_MAX_ORIGINAL_CHAT,
-		MessageCounter:        INITIAL_MESSAGE_COUNTER,
-		InitialMessageCounter: INITIAL_MESSAGE_COUNTER,
+	ms := slower.MessageSlower{
+		MessageChan:            make(chan string),
+		SlowChan:               make(chan string, 25),
+		DisplayChan:            make(chan string),
+		Speed:                  initSpeedMsgSec,
+		Delay:                  initDelayMs,
+		VoidMessageCounter:     initVoidMessageCounter,
+		InitVoidMessageCounter: initVoidMessageCounter,
 	}
 
+	go ms.Funnel()
 	go ms.Slow()
-
-	go func() {
-		for {
-			select {
-			case msg := <-ms.DisplayChan:
-				fmt.Printf("Delay:%vms Speed:%.1fmsg/s %v\n", ms.Delay, ms.Speed, msg)
-				ms.ResetMessageCounter()
-			default:
-				ms.DecreaseMessageCounter()
-				if ms.MessageCounter == 0 {
-					fmt.Println(messageslower.Format(fmt.Sprintf("%v void messages", INITIAL_MESSAGE_COUNTER), "red"))
-					ms.Slower()
-				}
-			}
-			time.Sleep(time.Duration(ms.Delay) * time.Millisecond)
-		}
-	}()
+	go ms.Display()
 
 	client := twitch.NewAnonymousClient()
 
 	client.OnPrivateMessage(func(msg twitch.PrivateMessage) {
-		streamer := messageslower.Format(fmt.Sprintf("%v", msg.Channel), "cyan")
-		username := messageslower.Format(fmt.Sprintf("%v", msg.User.Name), "magenta")
-		ms.MessageChan <- fmt.Sprintf("%v %v: %v", streamer, username, msg.Message)
+		streamer := utils.Format(fmt.Sprintf("%v", msg.Channel), "cyan")
+		username := utils.Format(fmt.Sprintf("%v", msg.User.Name), "magenta")
+		ms.MessageChan <- fmt.Sprintf("%-35v %40v: %v", streamer, username, msg.Message)
 	})
 
-	client.Join(streamer)
+	for _, channel := range channels {
+		client.Join(channel)
+	}
 
 	err := client.Connect()
 	if err != nil {
