@@ -11,9 +11,9 @@ graph LR;
 
 ```mermaid
 graph LR;
-    M[Chat\nMessage]--MessageChan\nunbuffered chan-->F[goroutine\nFunnel];
-    F[goroutine\nFunnel]--SlowChan\nbuffered chan(25)-->S[goroutine\nSlow];
-    S[goroutine\nSlow]--DisplayChan\nunbuffered chan-->D[goroutine\nDisplay];
+    M["Chat\nMessage"]--"MessageChan\nunbuffered chan"-->F["goroutine\nFunnel"];
+    F["goroutine\nFunnel"]--"SlowChan\nbuffered chan(25)"-->S[goroutine\nSlow];
+    S["goroutine\nSlow"]--"DisplayChan\nunbuffered chan"-->D["goroutine\nDisplay"];
 ```
 
 ## Quick start
