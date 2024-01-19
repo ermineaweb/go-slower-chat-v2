@@ -21,6 +21,11 @@ go mod tidy && go build ./src/main.go && ./main
 ./build.sh && ./run.sh
 ```
 
+```bash
+./run.sh -h
+./run.sh -c twitch_streamer1,twitch_streamer2
+```
+
 ## Goals
 
 - learning goroutines / channels in golang
