@@ -2,6 +2,9 @@
 
 This application allows you to smooth the speed of Twitch messages to read them more easily. For this we use a buffered channel and goroutines which are responsible for funneling, slowing and displaying the messages.
 
+![image](screen.png)
+
+
 ```mermaid
 graph LR;
     M["Chat\nMessage"]--"MessageChan\nunbuffered chan"-->F["goroutine\nFunnel"];
